@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"github.com/S1lvesterTake/marketplace-api/infrastructure/persistance/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"github.com/joho/godotenv"
 )
 
@@ -23,7 +24,8 @@ func InitRoute() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v1")
+	db := db.DBInit()
 
 	// Health check
 	router.GET("/healthcheck", func(c *gin.Context) {
@@ -32,7 +34,7 @@ func InitRoute() {
 		})
 	})
 
-	db.DBInit()
+	productRoute(v1, db)
 
 	e := godotenv.Load()
 	if e != nil {
@@ -45,4 +47,12 @@ func InitRoute() {
 	}
 
 	router.Run(":" + port)
+}
+
+func productRoute(route *gin.RouterGroup, db *gorm.DB) {
+	handler := CreateProductHandler(db)
+	v1 := route.Group("/product")
+	{
+		v1.POST("", handler.CreateProductHandler)
+	}
 }
